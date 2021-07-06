@@ -10,6 +10,9 @@ app = Flask(__name__)
 titanic_df = pd.read_csv("static/data/train.csv")
 survived = titanic_df[(titanic_df['Survived']==1) & (titanic_df["Age"].notnull())]
 
+crimes_df = pd.read_csv("static/data/Crimes.csv")
+crimes_sel = crimes_df[(crimes_df["X Coordinate"].notnull()) & (crimes_df["Y Coordinate"].notnull())]
+
 @app.route('/')
 def index():
     return render_template('home.html')
@@ -18,6 +21,47 @@ def calculate_percentage(val, total):
     """calcula los procentajes del total"""
     percent = np.divide(val, total)
     return percent
+
+@app.route('/get_year')
+def get_year():
+    grouped = crimes_sel.groupby("Primary Type")
+    class_labels = ['ARSON', 'ASSAULT', 'BATTERY','BURGLARY', 'CONCEALED CARRY LICENSE VIOLATION', 'CRIM SEXUAL ASSAULT', 'CRIMINAL DAMAGE', 'CRIMINAL SEXUAL ASSAULT', 'CRIMINAL TRESPASS', 'DECEPTIVE PRACTICE',
+                'DOMESTIC VIOLENCE','GAMBLING','HOMICIDE','HUMAN TRAFFICKING','INTERFERENCE WITH PUBLIC OFFICER','INTIMIDATION','KIDNAPPING','LIQUOR LAW VIOLATION','MOTOR VEHICLE THEFT','NARCOTICS','NON - CRIMINAL','NON-CRIMINAL','NON-CRIMINAL (SUBJECT SPECIFIED)','OBSCENITY','OFFENSE INVOLVING CHILDREN','OTHER NARCOTIC VIOLATION','OTHER OFFENSE','PROSTITUTION','PUBLIC INDECENCY','PUBLIC PEACE VIOLATION','RITUALISM','ROBBERY','SEX OFFENSE','STALKING','THEFT','WEAPONS VIOLATION']
+    data=[]
+    for i in class_labels:
+        data.append(grouped.get_group(i))
+
+    separado=[]
+    for i in range(len(data)):
+        separado.append(data[i].loc[: , ['Latitude', 'Longitude']])
+
+    JSon1 = []
+    for i in range(len(separado)):
+        eachData = {}
+        eachData['category'] = class_labels[i]
+        eachData['data'] = separado[i]
+        JSon1.append(eachData)
+    return JSon1
+
+@app.route('/get_crimes')
+def get_crimes():
+    grouped = crimes_sel.groupby("Year")
+    class_labels = [2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021]
+    data=[]
+    for i in class_labels:
+        data.append(grouped.get_group(i))
+        
+    separado=[]
+    for i in range(len(data)):
+        separado.append(data[i].loc[: , ['Latitude', 'Longitude']])
+
+    JSon1 = []
+    for i in range(len(separado)):
+        eachData = {}
+        eachData['category'] = class_labels[i]
+        eachData['data'] = separado[i]
+        JSon1.append(eachData)
+    return JSon1
 
 @app.route('/get_piechart_data')
 def get_piechart_data():
