@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from flask import Flask, jsonify, render_template
-
+import random
 from datetime import datetime
 import csv
+from numpy.core.numeric import moveaxis
 import pandas as pd
 import numpy as np
 
@@ -23,7 +24,7 @@ def index():
     return render_template('home.html')
 
 
-data = []
+""" data = []
 class_labels = crimes_df['Primary Type'].unique()
 grouped = crimes_sel.groupby("Primary Type")
 for i in class_labels:
@@ -53,7 +54,7 @@ def correjir():
 
 
 def correjir_geocoding():
-    n = 1
+    n = 1 """
 
 
 def calculate_percentage(val, total):
@@ -90,6 +91,7 @@ def get_coords_by_crime_type():
 @app.route('/get_piechart_data')
 def get_piechart_data():
     class_labels = crimes_df['Primary Type'].unique()
+
     pclass_percent = calculate_percentage(crimes_sel.groupby(
         'Primary Type').size().values, crimes_sel['ID'].count())*100
     pieChartData = []
@@ -102,15 +104,16 @@ def get_piechart_data():
     return jsonify(pieChartData)
 
 
-@app.route('/get_barchart_data')
+""" @app.route('/get_barchart_data')
 def get_barchart_data():
-    """ com_labels = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010',
-                  '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021'] """
+    com_labels = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010',
+                  '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021']
     
-    com_labels = class_labels = crimes_df['Year'].unique().tolist()
+    com_labels   = crimes_df['Year'].unique().tolist()
+    com_labels = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre']
     class_labels = crimes_df['Primary Type'].unique()
-    crimes_sel["com_labels"] = pd.cut(crimes_sel.Year, range(
-        2001, 2023, 1), right=False, labels=com_labels)
+
+    crimes_sel["com_labels"] = pd.cut(crimes_sel.Year, 10)
     crimes_sel[['com_labels', 'Primary Type']]
     crimes = []
 
@@ -140,7 +143,7 @@ def get_barchart_data():
             eachBarChart['measure'] = round(item, 1)
             barChartData.append(eachBarChart)
 
-    return jsonify(barChartData)
+    return jsonify(barChartData) """
 
 
 @app.route('/api/coords/by_year')
@@ -202,9 +205,9 @@ def get_piechart_data():
         eachData['measure'] =  round(item,1)
         pieChartData.append(eachData)
 
-    return jsonify(pieChartData)
+    return jsonify(pieChartData) """
 
-@app.route('/get_barchart_data')
+""" @app.route('/get_barchart_data')
 def get_barchart_data():
     age_labels = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79']
     survived["age_group"] = pd.cut(survived.Age, range(0, 81, 10), right=False, labels=age_labels)
@@ -251,9 +254,97 @@ def get_barchart_data():
     return jsonify(barChartData) """
 
 
+@app.route('/get_barchart_data')
+def get_barchart_data():
+    month_labels = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    class_labels = crimes_df['Primary Type'].unique()
+
+    month_recount = {}
+    for index, row in crimes_sel.iterrows():
+        idate = datetime.strptime(row['Date'], '%m/%d/%Y %H:%M:%S %p')
+        month = month_labels[idate.month-1]
+
+        if month in month_recount:
+            month_recount[month] += 1
+        else:
+            month_recount[month] = 1
+
+    class_month_recount = {}
+    for index, row in crimes_sel.iterrows():
+        crime_type = row['Primary Type']
+        idate = datetime.strptime(row['Date'], '%m/%d/%Y %H:%M:%S %p')
+        month = month_labels[idate.month-1]
+        if crime_type in class_month_recount:
+            if month in class_month_recount[crime_type]:
+                class_month_recount[crime_type][month] += 1
+            else:
+                class_month_recount[crime_type][month] = 1
+        else:
+            class_month_recount[crime_type] = {}
+            class_month_recount[crime_type][month] = 1
+
+    """ Posible optimizacion al momento de calcular los recuentos """
+    barChartData = []
+    total = 0
+    for v in month_recount.values():
+        total += v
+    for key, value in month_recount.items():
+        obj = {}
+        obj["category"] = key
+        obj["group"] = "All"
+
+        obj["measure"] = round((value/total)*100, 1)
+        barChartData.append(obj)
+
+    for crime_type, value in class_month_recount.items():
+        crime_total = 0
+        for v in value.values():
+            crime_total += v
+        for month, recount in value.items():
+            obj = {}
+            obj["category"] = month
+            obj["group"] = crime_type
+            obj['measure'] = round((recount/crime_total)*100, 1)
+            barChartData.append(obj)
+
+    """ 
+    Falta realizar validacion de que todos los tipos de crimenes
+    y meses esten completos, en caso no se hayan registrado casos
+    tienen que tener el valor 0.
+    """
+
+    return jsonify(barChartData)
+
+
 @app.route('/get_map_data')
 def get_map_data():
     return 1
+
+
+@app.route('/get_dataset_header')
+def get_dataset_header():
+    rows = 10
+    dataset_header = {}
+    dataset_header['columns'] = crimes_df.columns.tolist()
+    dataset_header['rows'] = []
+    for index, row in crimes_df.iterrows():
+        if (rows == 0):
+            break
+        rows -= 1
+        obj = {}
+        for key, val in row.items():
+            if (np.isnan(val)):
+                obj[key] = "NaN"
+            else:
+                obj[key] = val
+        dataset_header['rows'].append(obj)
+    return jsonify(dataset_header)
+
+
+@app.route('/preanalisis')
+def get_metadata():
+    return render_template('preanalisis.html')
 
 
 if __name__ == '__main__':

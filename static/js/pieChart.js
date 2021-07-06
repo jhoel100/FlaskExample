@@ -1,7 +1,7 @@
 var formatAsInteger = d3.format(",");
 
 function d3PieChart(dataset, datasetBarChart){
-
+    console.log(dataset)
     var margin = {top: 30, right: 5, bottom: 20, left: 50};
     var width = 400 - margin.left - margin.right ,
         height = 400 - margin.top - margin.bottom,

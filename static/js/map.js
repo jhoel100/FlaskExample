@@ -31,7 +31,6 @@ function d3map() {
       if (error) {
         console.error("Error: " + error);
       } else {
-        console.log(points["ARSON"]);
         plot_points(points);
       }
     });
@@ -55,7 +54,6 @@ function d3map() {
       })
       .attr("r", 2)
       .style("fill", "green");
-    console.log("alo");
   }
 
   function drawMap(datageo) {

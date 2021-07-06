@@ -65,7 +65,7 @@ function d3BarChart(datasetBarChart) {
     .attr("y", misc.title)
     .attr("class","title")				
     .attr("text-anchor", "middle")
-    .text("Age-group Breakdown of all Survivors");
+    .text("Porcentaje de frecuencia de crímenes según su tipo");
 
     var plot = svg
         .append("g")
