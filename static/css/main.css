@@ -1,7 +1,7 @@
 
 #pieChart {    
 	position:relative;
-	top:40%;
+	top:5%;
 	left:10px;
 	width:400px;
     height: 400px; 
@@ -11,8 +11,14 @@
 
 #barChart {
 	position:relative;
-	top:40%;
+	top:5%;
     height: 400px;
+    display: inline-block;
+}
+
+#map {
+    position:relative;
+    top:5%;
     display: inline-block;
 }
 

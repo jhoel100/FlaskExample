@@ -25,9 +25,11 @@
     <script>
         var piechartDataUrl = "{{ url_for('get_piechart_data') }}";
         var barchartDataUrl = "{{ url_for('get_barchart_data') }}";
+        var mapUrl = "{{ url_for('get_map_data') }}";
     </script>
     <script src="{{ url_for('static', filename='js/pieChart.js') }}"></script>
     <script src="{{ url_for('static', filename='js/barChart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
     <script src="{{ url_for('static', filename='js/updateChart.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   </body>
