@@ -31,7 +31,6 @@ def get_year():
     grouped = crimes_sel.groupby("Primary Type")
     # print(np.array(grouped))
     class_labels = crimes_df['Primary Type'].unique()
-    print(type(class_labels))
     data = []
     for i in class_labels:
         data.append(grouped.get_group(i))
