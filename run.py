@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from flask import Flask, jsonify, render_template
+from datetime import datetime
 import csv
 import pandas as pd
 import numpy as np
@@ -19,6 +20,35 @@ crimes_sel = crimes_df[(crimes_df["X Coordinate"].notnull())
 @app.route('/')
 def index():
     return render_template('home.html')
+
+data=[]
+grouped = crimes_sel.groupby("Primary Type")
+for i in class_labels:
+    data.append(grouped.get_group(i))
+
+grouped = crimes_df.groupby("Primary Type")
+data_nan=[]
+for i in class_labels:
+    data_nan.append(grouped.get_group(i))
+
+def correjir():
+    n=3
+    for i in range(len(class_labels)):
+        print(i)
+        separado=data[i].loc[: , ['Latitude', 'Longitude']]
+        if n<len(separado):
+            kmeans = KMeans(n_clusters=n).fit(separado)
+            centroids = kmeans.cluster_centers_
+
+            #llenar con los centroides calculados
+            for index, row in data_nan[i].iterrows():
+                if(np.isnan(row['Latitude'])):
+                    row['Latitude']=centroids[random.randint(0,n-1)][0]
+                if(np.isnan(row['Longitude'])):
+                    row['Latitude']=centroids[random.randint(0,n-1)][1]
+
+def correjir_geocoding():
+    n=1
 
 
 def calculate_percentage(val, total):
