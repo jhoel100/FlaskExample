@@ -26,7 +26,7 @@ function d3map() {
     });
 
   d3.queue()
-    .defer(d3.json, "/api/coords_by_crime_type")
+    .defer(d3.json, "/api/coords/crime_type")
     .await(function (error, points) {
       if (error) {
         console.error("Error: " + error);

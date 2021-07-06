@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from flask import Flask, jsonify, render_template
+
 from datetime import datetime
 import csv
 import pandas as pd
@@ -8,7 +9,7 @@ import numpy as np
 app = Flask(__name__)
 
 titanic_df = pd.read_csv("static/data/train.csv")
-survived = titanic_df[(titanic_df['Survived']==1) 
+survived = titanic_df[(titanic_df['Survived'] == 1)
                       & (titanic_df["Age"].notnull())]
 
 
@@ -21,34 +22,38 @@ crimes_sel = crimes_df[(crimes_df["X Coordinate"].notnull())
 def index():
     return render_template('home.html')
 
-data=[]
+
+data = []
+class_labels = crimes_df['Primary Type'].unique()
 grouped = crimes_sel.groupby("Primary Type")
 for i in class_labels:
     data.append(grouped.get_group(i))
 
 grouped = crimes_df.groupby("Primary Type")
-data_nan=[]
+data_nan = []
 for i in class_labels:
     data_nan.append(grouped.get_group(i))
 
+
 def correjir():
-    n=3
+    n = 3
     for i in range(len(class_labels)):
         print(i)
-        separado=data[i].loc[: , ['Latitude', 'Longitude']]
-        if n<len(separado):
+        separado = data[i].loc[:, ['Latitude', 'Longitude']]
+        if n < len(separado):
             kmeans = KMeans(n_clusters=n).fit(separado)
             centroids = kmeans.cluster_centers_
 
-            #llenar con los centroides calculados
+            # llenar con los centroides calculados
             for index, row in data_nan[i].iterrows():
                 if(np.isnan(row['Latitude'])):
-                    row['Latitude']=centroids[random.randint(0,n-1)][0]
+                    row['Latitude'] = centroids[random.randint(0, n-1)][0]
                 if(np.isnan(row['Longitude'])):
-                    row['Latitude']=centroids[random.randint(0,n-1)][1]
+                    row['Latitude'] = centroids[random.randint(0, n-1)][1]
+
 
 def correjir_geocoding():
-    n=1
+    n = 1
 
 
 def calculate_percentage(val, total):
@@ -82,6 +87,62 @@ def get_coords_by_crime_type():
     return jsonify(JSon1)
 
 
+@app.route('/get_piechart_data')
+def get_piechart_data():
+    class_labels = crimes_df['Primary Type'].unique()
+    pclass_percent = calculate_percentage(crimes_sel.groupby(
+        'Primary Type').size().values, crimes_sel['ID'].count())*100
+    pieChartData = []
+    for index, item in enumerate(pclass_percent):
+        eachData = {}
+        eachData['category'] = class_labels[index]
+        eachData['measure'] = round(item, 1)
+        pieChartData.append(eachData)
+
+    return jsonify(pieChartData)
+
+
+@app.route('/get_barchart_data')
+def get_barchart_data():
+    """ com_labels = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010',
+                  '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021'] """
+    
+    com_labels = class_labels = crimes_df['Year'].unique().tolist()
+    class_labels = crimes_df['Primary Type'].unique()
+    crimes_sel["com_labels"] = pd.cut(crimes_sel.Year, range(
+        2001, 2023, 1), right=False, labels=com_labels)
+    crimes_sel[['com_labels', 'Primary Type']]
+    crimes = []
+
+    for i in range(len(class_labels)):
+        crimes.append(
+            crimes_sel[crimes_sel['Primary Type'] == class_labels[i]])
+        percentAll = []
+    percentA = calculate_percentage(crimes_sel.groupby(
+        'Year').size().values, crimes_sel['ID'].count())*100
+    for i in range(len(class_labels)):
+        percentAll.append(calculate_percentage(crimes[i].groupby(
+            'Year').size().values, crimes[i]['ID'].count())*100)
+
+    barChartData = []
+    for index, item in enumerate(percentA):
+        eachBarChart = {}
+        eachBarChart['group'] = "All"
+        eachBarChart['category'] = com_labels[index]
+        eachBarChart['measure'] = round(item, 1)
+        barChartData.append(eachBarChart)
+
+    for i in range(len(percentAll)):
+        for index, item in enumerate(percentAll[i]):
+            eachBarChart = {}
+            eachBarChart['group'] = class_labels[i]
+            eachBarChart['category'] = com_labels[index]
+            eachBarChart['measure'] = round(item, 1)
+            barChartData.append(eachBarChart)
+
+    return jsonify(barChartData)
+
+
 @app.route('/api/coords/by_year')
 def get_coords_by_year():
     grouped = crimes_sel.groupby("Year")
@@ -105,6 +166,7 @@ def get_coords_by_year():
             JSon1[class_labels[i]] = separado[i].values.tolist()
     return jsonify(JSon1)
 
+
 @app.route('/api/coords/by_month')
 def get_coords_by_month():
     # by_year = crimes_sel.groupby("Year")
@@ -127,9 +189,9 @@ def get_coords_by_month():
                 years[iyear][idate.month].append([ilongitude, ilatitude])
 
     return jsonify(years)
-  
-  
-@app.route('/get_piechart_data')
+
+
+""" @app.route('/get_piechart_data')
 def get_piechart_data():
     class_labels = ['Class I', 'Class II', 'Class III']
     pclass_percent = calculate_percentage(survived.groupby('Pclass').size().values, survived['PassengerId'].count())*100
@@ -186,7 +248,8 @@ def get_barchart_data():
         eachBarChart['measure'] = round(item,1)
         barChartData.append(eachBarChart)
     
-    return jsonify(barChartData)
+    return jsonify(barChartData) """
+
 
 @app.route('/get_map_data')
 def get_map_data():
