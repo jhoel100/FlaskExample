@@ -7,7 +7,8 @@ import numpy as np
 app = Flask(__name__)
 
 titanic_df = pd.read_csv("static/data/train.csv")
-survived = titanic_df[(titanic_df['Survived']==1) & (titanic_df["Age"].notnull())]
+survived = titanic_df[(titanic_df['Survived']==1) 
+                      & (titanic_df["Age"].notnull())]
 
 
 crimes_df = pd.read_csv("static/data/Crimes.csv")
@@ -26,8 +27,8 @@ def calculate_percentage(val, total):
     return percent
 
 
-@app.route('/api/coords_by_crime_type')
-def get_year():
+@app.route('/api/coords/crime_type')
+def get_coords_by_crime_type():
     grouped = crimes_sel.groupby("Primary Type")
     # print(np.array(grouped))
     class_labels = crimes_df['Primary Type'].unique()
@@ -51,8 +52,8 @@ def get_year():
     return jsonify(JSon1)
 
 
-@app.route('/api/coords_by_year')
-def get_crimes():
+@app.route('/api/coords/by_year')
+def get_coords_by_year():
     grouped = crimes_sel.groupby("Year")
     class_labels = crimes_df['Year'].unique().tolist()
     data = []
@@ -74,6 +75,30 @@ def get_crimes():
             JSon1[class_labels[i]] = separado[i].values.tolist()
     return jsonify(JSon1)
 
+@app.route('/api/coords/by_month')
+def get_coords_by_month():
+    # by_year = crimes_sel.groupby("Year")
+    class_labels = crimes_df['Year'].unique().tolist()
+    years = {}
+    for ix, row in crimes_df.dropna().iterrows():
+        ilatitude = float(row['Latitude'])
+        ilongitude = float(row['Longitude'])
+        iyear = int(row['Year'])
+        idate = datetime.strptime(row['Date'], '%m/%d/%Y %H:%M:%S %p')
+
+        if iyear not in years:
+            # years[iyear] = [[ilongitude, ilatitude]]
+            years[iyear] = dict()
+            years[iyear][idate.month] = [[ilongitude, ilatitude]]
+        else:
+            if idate.month not in years[iyear]:
+                years[iyear][idate.month] = [[ilongitude, ilatitude]]
+            else:
+                years[iyear][idate.month].append([ilongitude, ilatitude])
+
+    return jsonify(years)
+  
+  
 @app.route('/get_piechart_data')
 def get_piechart_data():
     class_labels = ['Class I', 'Class II', 'Class III']
